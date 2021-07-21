@@ -3,12 +3,14 @@ from app import db
 from dotenv import load_dotenv
 from app.models.practitioner import Practitioner
 from app.models.address import Address
+from app.models.user import User
 import os
 
 load_dotenv()
 
 practitioner_bp = Blueprint('practitioner', __name__)
 address_bp = Blueprint('address', __name__)
+user_bp = Blueprint('user', __name__ )
 
 @practitioner_bp.route('/')
 def root():
@@ -51,7 +53,6 @@ def handle_practitioners():
         
         if "postalCode" not in address or "street" not in address or "city" not in address or "state" not in address or "country" not in address:
             return jsonify({"details": "Invalid data"}), 400
-
         new_address = Address(postal_code=address["postalCode"],
                             street_name=address["street"],
                             city=address["city"],
@@ -62,9 +63,9 @@ def handle_practitioners():
         db.session.add(new_address)
         db.session.commit()
         
-        subscribed_practitioner = {"practitioner":
+        registered_practitioner = {"practitioner":
             Practitioner.response_dict(new_practitioner)}
-        return jsonify(subscribed_practitioner), 201 
+        return jsonify(registered_practitioner), 201 
 
 
 @practitioner_bp.route("/practitioners/<practitioner_id>", methods=["GET", "DELETE"])
@@ -79,6 +80,34 @@ def handle_practitioner(practitioner_id):
         db.session.commit()
         practitioner_response_body = {"details": f'practitioner number {practitioner.practitioner_id} "{practitioner.title}" successfully deleted'}
         return jsonify(practitioner_response_body),200
+
+# User route
+@user_bp.route("/register", methods=["GET", "POST"])
+def handle_user():
+    if request.method == "GET":
+        users = User.query.all()
+
+        users_response = []
+        for user in users:
+            users_response.append(User.user_dict(user))
+        return jsonify(users_response)
+
+    elif request.method == "POST":
+        request_body = request.get_json()
+        username = request_body.get("username")
+        password = request_body.get("password")
+
+        if "username" not in request_body or "password" not in request_body:
+            return jsonify({"details": "Invalid data"}), 400
+        registered_user = User(username=username,
+                            password=password)
+        db.session.add(registered_user)
+        db.session.commit()
+
+        result_user={"user":
+            User.user_dict(registered_user)}
+        
+        return jsonify(result_user), 201 
 
 
 # Adresses route

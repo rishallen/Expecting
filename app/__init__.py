@@ -28,12 +28,16 @@ def create_app():
     # from app.models.card import Card
     from app.models.practitioner import Practitioner
     from app.models.address import Address
+    from app.models.user import User
 
     from .routes import address_bp
     app.register_blueprint(address_bp)
 
     from .routes import practitioner_bp
     app.register_blueprint(practitioner_bp)
+
+    from .routes import user_bp
+    app.register_blueprint(user_bp)
 
     CORS(app)
     return app
