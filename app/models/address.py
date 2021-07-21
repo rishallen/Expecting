@@ -8,3 +8,12 @@ class Address (db.Model):
     state = db.Column(db.String)
     country = db.Column(db.String)
     practitioner_id = db.Column(db.Integer, db.ForeignKey('practitioner.practitioner_id'), nullable=True)
+
+    def address_response_dict(address):
+        return {
+            "postalCode": address.postal_code,
+            "street": address.street_name,
+            "city": address.city,
+            "state": address.state,
+            "country": address.country
+        }

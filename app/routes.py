@@ -25,14 +25,7 @@ def handle_practitioners():
 
         practitioners_response = []
         for practitioner in practitioners:
-            practitioners_response.append({
-                "practitioner_id": practitioner.practitioner_id,
-                "first_name": practitioner.first_name,
-                "last_name": practitioner.last_name,
-                "title": practitioner.title,
-                "social_media_handle": practitioner.social_media_handle,
-                "description": practitioner.description
-            })
+            practitioners_response.append(Practitioner.response_dict(practitioner))
         return jsonify(practitioners_response)
 
     # Create new practitioner
@@ -70,27 +63,16 @@ def handle_practitioners():
         db.session.commit()
         
         subscribed_practitioner = {"practitioner":
-            {"practitioner_id": new_practitioner.practitioner_id,
-            "FirstName": new_practitioner.first_name,
-            "LastName": new_practitioner.last_name,
-            "Title": new_practitioner.title,
-            "Social_media_handle": new_practitioner.social_media_handle
-        }}
+            Practitioner.response_dict(new_practitioner)}
         return jsonify(subscribed_practitioner), 201 
 
-# Delete Practitioner
+
 @practitioner_bp.route("/practitioners/<practitioner_id>", methods=["GET", "DELETE"])
 def handle_practitioner(practitioner_id):
     practitioner = Practitioner.query.get_or_404(practitioner_id)
     if request.method == "GET":
         selected_practitioner = {"practitioner":
-        {"practitioner_id": practitioner.practitioner_id,
-        "FirstName": practitioner.first_name,
-        "LastName": practitioner.last_name,
-        "Title": practitioner.title,
-        "Social_media_handle": practitioner.social_media_handle,
-        "Description": practitioner.description
-        }}
+        Practitioner.response_dict(practitioner)}
         return jsonify(selected_practitioner),200
     elif request.method == "DELETE":
         db.session.delete(practitioner)
@@ -100,25 +82,16 @@ def handle_practitioner(practitioner_id):
 
 
 # Adresses route
-# Add additional addresses 
-@address_bp.route("/practitioners/<practitioner_id>/addresses", methods = ["POST", "GET"], strict_slashes = False)
-def handle_addresses(practitioner_id):
+# Add additional address 
+@address_bp.route("/practitioners/<practitioner_id>/address", methods = ["POST", "GET"], strict_slashes = False)
+def handle_address(practitioner_id):
     practitioner = Practitioner.query.get(practitioner_id)
 
     if request.method == "GET":
-        addresses = practitioner.addresses
-        addresses_response = []
-        for address in addresses:
-            addresses_response.append({
-            "postalCode": address.postal_code,
-            "recipient": address.recipient,
-            "street": address.street_name,
-            "city": address.city,
-            "state": address.state,
-            "country": address.country,
-            "practitioner_id": address.practitioner_id,
-        })
-        return jsonify(addresses_response)
+        address = practitioner.address
+        address_response = []
+        address_response.append(Address.address_response_dict(address))
+        return jsonify(address_response)
 
     elif request.method == "POST":
         request_body = request.get_json()
