@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 from app.models.practitioner import Practitioner
 from app.models.address import Address
 from app.models.user import User
+from app.models.login import Login
+
 import os
 
 load_dotenv()
@@ -11,6 +13,7 @@ load_dotenv()
 practitioner_bp = Blueprint('practitioner', __name__)
 address_bp = Blueprint('address', __name__)
 user_bp = Blueprint('user', __name__ )
+login_bp = Blueprint('login', __name__ )
 
 @practitioner_bp.route('/')
 def root():
@@ -65,16 +68,28 @@ def handle_practitioners():
         
         registered_practitioner = {"practitioner":
             Practitioner.response_dict(new_practitioner)}
-        return jsonify(registered_practitioner), 201 
+        return jsonify(registered_practitioner), 201
 
 
-@practitioner_bp.route("/practitioners/<practitioner_id>", methods=["GET", "DELETE"])
+@practitioner_bp.route("/practitioners/<practitioner_id>", methods=["GET", "PATCH", "DELETE"])
 def handle_practitioner(practitioner_id):
     practitioner = Practitioner.query.get_or_404(practitioner_id)
     if request.method == "GET":
         selected_practitioner = {"practitioner":
         Practitioner.response_dict(practitioner)}
         return jsonify(selected_practitioner),200
+
+    # Update a practitioner
+    elif request.method == "PATCH":
+        practitioner_data = request.get_json()
+        practitioner.update_from_dict(practitioner_data)
+
+        db.session.commit()
+        response_body = {
+            "practitioner": practitioner.response_dict()
+        }
+        return jsonify(response_body), 200
+
     elif request.method == "DELETE":
         db.session.delete(practitioner)
         db.session.commit()
@@ -89,8 +104,38 @@ def handle_user():
 
         users_response = []
         for user in users:
-            users_response.append(User.user_dict(user))
+            users_response.append(user.user_dict())
         return jsonify(users_response)
+
+    elif request.method == "POST":
+        request_body = request.get_json()
+        username = request_body.get("username")
+        password = request_body.get("password")
+        email = request_body.get("email")
+
+        if "username" not in request_body or "password" not in request_body or "email" not in request_body:
+            return jsonify({"details": "Invalid data"}), 400
+        registered_user = User(username=username,
+                            password=password,
+                            email=email)
+        db.session.add(registered_user)
+        db.session.commit()
+
+        result_user={"user":
+            User.user_dict(registered_user)}
+        
+        return jsonify(result_user), 201
+
+
+@login_bp.route('/login', methods=["GET", "POST"])
+def handle_login():
+    if request.method == "GET":
+        logins = Login.query.all()
+
+        logins_response = []
+        for login in logins:
+            logins_response.append(Login.login_dict(login))
+        return jsonify(logins_response)
 
     elif request.method == "POST":
         request_body = request.get_json()
@@ -99,16 +144,15 @@ def handle_user():
 
         if "username" not in request_body or "password" not in request_body:
             return jsonify({"details": "Invalid data"}), 400
-        registered_user = User(username=username,
+        registered_login = Login(username=username,
                             password=password)
-        db.session.add(registered_user)
-        db.session.commit()
+        # db.session.add(registered_login)
+        # db.session.commit()
 
-        result_user={"user":
-            User.user_dict(registered_user)}
+        result_login={"login":
+            Login.login_dict(registered_login)}
         
-        return jsonify(result_user), 201 
-
+        return jsonify(result_login), 201
 
 # Adresses route
 # Add additional address 

@@ -17,3 +17,11 @@ class Address (db.Model):
             "state": address.state,
             "country": address.country
         }
+    
+
+    def update_from_dict(self, data):
+        self.postal_code=data["postalCode"]
+        self.street_name=data["street"]
+        self.city=data["city"]
+        self.state=data["state"]
+        self.country=data["country"]

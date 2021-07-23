@@ -20,3 +20,19 @@ class Practitioner (db.Model):
             "description": practitioner.description,
             "address": Address.address_response_dict(practitioner.address)
         }
+    
+    def update_from_dict(self, data):
+        self.first_name=data["first_name"]
+        self.last_name=data["last_name"]
+        self.title=data["title"]
+        self.social_media_handle=data["social_media_handle"]
+        self.description=data["description"]
+        self.address.update_from_dict(data["address"])
+
+        # practitioner_data.items():
+        #     if k != 'address':
+        #         setattr(practitioner, k, v)
+        # address_data = practitioner_data["address"]
+        # address = practitioner.address
+        # for k, v in address_data.items():
+        #     setattr(address, k, v)

@@ -25,10 +25,10 @@ def create_app():
     migrate.init_app(app, db)
 
     # Register Blueprints here
-    # from app.models.card import Card
     from app.models.practitioner import Practitioner
     from app.models.address import Address
     from app.models.user import User
+    from app.models.login import Login
 
     from .routes import address_bp
     app.register_blueprint(address_bp)
@@ -38,6 +38,9 @@ def create_app():
 
     from .routes import user_bp
     app.register_blueprint(user_bp)
+
+    from .routes import login_bp
+    app.register_blueprint(login_bp)
 
     CORS(app)
     return app
