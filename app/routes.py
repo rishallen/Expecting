@@ -5,7 +5,6 @@ from app.models.post import Post
 from app.models.provider import Provider
 from app.models.address import Address
 from app.models.user import User
-from app.models.login import Login
 
 import os
 
