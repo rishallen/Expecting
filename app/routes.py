@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify, make_response
 from app import db
 from dotenv import load_dotenv
-from app.models.practitioner import Practitioner
+from app.models.post import Post
+from app.models.provider import Provider
 from app.models.address import Address
 from app.models.user import User
 from app.models.login import Login
@@ -10,94 +11,161 @@ import os
 
 load_dotenv()
 
-practitioner_bp = Blueprint('practitioner', __name__)
+provider_bp = Blueprint('provider', __name__)
 address_bp = Blueprint('address', __name__)
 user_bp = Blueprint('user', __name__ )
 login_bp = Blueprint('login', __name__ )
+post_bp = Blueprint('post', __name__ )
 
-@practitioner_bp.route('/')
+@provider_bp.route('/')
 def root():
     return {
-        "name":"mango-mania"
+        "name":"expecting"
     }
 
-# Practitioner routes
-# Get all practitioners
-@practitioner_bp.route('/practitioners', methods=["GET", "POST"], strict_slashes = False)
-def handle_practitioners():
+# Provider routes
+# Get all providers
+@provider_bp.route('/providers', methods=["GET", "POST"], strict_slashes = False)
+def handle_providers():
     if request.method == "GET":
-        practitioners = Practitioner.query.all()
+        providers = Provider.query.all()
 
-        practitioners_response = []
-        for practitioner in practitioners:
-            practitioners_response.append(Practitioner.response_dict(practitioner))
-        return jsonify(practitioners_response)
+        providers_response = []
+        for provider in providers:
+            providers_response.append(Provider.response_dict(provider))
+        return jsonify(providers_response)
 
-    # Create new practitioner
+    # Create new provider
     elif request.method == "POST":
         request_body = request.get_json()
-        first_name = request_body.get("FirstName")
-        last_name = request_body.get("LastName")
-        title = request_body.get("Title")
-        social_media_handle = request_body.get("Social_media_handle")
-        description =  request_body.get("Description")
+        first_name = request_body.get("first_name")
+        last_name = request_body.get("last_name")
+        title = request_body.get("title")
+        social_media_handle = request_body.get("social_media_handle")
+        description =  request_body.get("description")
         address = request_body.get("address")
+        post = request_body.get("post")
 
-        if "FirstName" not in request_body or "LastName" not in request_body or "Title" not in request_body or "Social_media_handle" not in request_body or "Description" not in request_body or "address" not in request_body:
+        if "first_name" not in request_body or "last_name" not in request_body or "title" not in request_body or "social_media_handle" not in request_body or "description" not in request_body or "address" not in request_body:
             return jsonify({"details": "Invalid data"}), 400
-        new_practitioner = Practitioner(first_name=first_name,
+        new_provider = Provider(first_name=first_name,
                         last_name=last_name,
                         title=title,
                         social_media_handle=social_media_handle,
                         description=description)
-        db.session.add(new_practitioner)
+
+        db.session.add(new_provider)
         db.session.commit()
 
         
-        if "postalCode" not in address or "street" not in address or "city" not in address or "state" not in address or "country" not in address:
+        if "postal_code" not in address or "street_name" not in address or "city" not in address or "state" not in address or "country" not in address:
             return jsonify({"details": "Invalid data"}), 400
-        new_address = Address(postal_code=address["postalCode"],
-                            street_name=address["street"],
+        new_address = Address(postal_code=address["postal_code"],
+                            street_name=address["street_name"],
                             city=address["city"],
                             state=address["state"],
                             country=address["country"],
-                            practitioner_id= new_practitioner.practitioner_id)
+                            provider_id= new_provider.provider_id)
+
 
         db.session.add(new_address)
         db.session.commit()
+
         
-        registered_practitioner = {"practitioner":
-            Practitioner.response_dict(new_practitioner)}
-        return jsonify(registered_practitioner), 201
+        registered_provider = {"provider":
+            Provider.response_dict(new_provider)}
+        return jsonify(registered_provider), 201
 
 
-@practitioner_bp.route("/practitioners/<practitioner_id>", methods=["GET", "PATCH", "DELETE"])
-def handle_practitioner(practitioner_id):
-    practitioner = Practitioner.query.get_or_404(practitioner_id)
+@provider_bp.route("/providers/<provider_id>", methods=["GET", "PATCH", "DELETE"])
+def handle_provider(provider_id):
+    provider = Provider.query.get_or_404(provider_id)
     if request.method == "GET":
-        selected_practitioner = {"practitioner":
-        Practitioner.response_dict(practitioner)}
-        return jsonify(selected_practitioner),200
+        selected_provider = {"provider":
+        Provider.response_dict(provider)}
+        return jsonify(selected_provider),200
 
-    # Update a practitioner
+    # Update a provider
     elif request.method == "PATCH":
-        practitioner_data = request.get_json()
-        practitioner.update_from_dict(practitioner_data)
+        provider_data = request.get_json()
+        provider.update_from_dict(provider_data)
 
         db.session.commit()
         response_body = {
-            "practitioner": practitioner.response_dict()
+            "provider": provider.response_dict()
         }
         return jsonify(response_body), 200
 
     elif request.method == "DELETE":
-        db.session.delete(practitioner)
+        db.session.delete(provider)
         db.session.commit()
-        practitioner_response_body = {"details": f'practitioner number {practitioner.practitioner_id} "{practitioner.title}" successfully deleted'}
-        return jsonify(practitioner_response_body),200
+        provider_response_body = {"details": f'provider number {provider.provider_id} "{provider.title}" successfully deleted'}
+        return jsonify(provider_response_body),200
+
+# Posts route:
+# Get Posts       
+@provider_bp.route("/providers/<provider_id>/users/<user_id>/posts", methods=["GET","POST"])
+def handle_posts(provider_id, user_id):
+    provider = Provider.query.get(provider_id)
+
+    if request.method == "GET":
+        posts = provider.posts
+        posts_response = []
+        for post in posts:
+            if post.user_id == user_id: 
+                posts_response.append({
+                "post_id": post.post_id,
+                "message": post.message,
+                "provider_id": post.provider_id,
+                "user_id": post.user_id,
+        })
+        return jsonify(posts_response)
+    # Create post route:
+    elif request.method == "POST":
+        request_body = request.get_json()
+
+        if "message" not in request_body:
+            return jsonify({"details": "Invalid data"}), 400
+
+        new_post = Post(message=request_body["message"], like_count=0, provider_id=provider.provider_id)
+        db.session.add(new_post)
+        db.session.commit()
+        commited_post = {"post": {
+            "post_id": new_post.post_id,
+            "message": new_post.message,
+            "votes": new_post.like_count,
+            "provider_id": new_post.provider_id
+        }}
+        return jsonify(commited_post), 201
+
+# Votes route:
+@post_bp.route("/<post_id>/votes", methods=["PATCH"])
+def handle_post_like(post_id):
+    post = Post.query.get_or_404(post_id)
+    vote = request.args.get("like_count")
+    post.like_count += int(vote)
+
+    db.session.commit()
+    response_body = {
+        "post": {
+            "post_id": post.post_id,
+            "message": post.message,
+            "votes": post.like_count,
+        }
+    }
+    return jsonify(response_body), 200
+
+@post_bp.route("/posts/<post_id>", methods=["DELETE"])
+def handle_post_del(post_id):
+    post = Post.query.get_or_404(post_id)
+    db.session.delete(post)
+    db.session.commit()
+    posts_response_body = {"details": f'post {post.post_id} "{post.message}" successfully deleted'}
+    return jsonify(posts_response_body),200
+
 
 # User route
-@user_bp.route("/register", methods=["GET", "POST"])
+@user_bp.route("/users", methods=["GET", "POST"])
 def handle_user():
     if request.method == "GET":
         users = User.query.all()
@@ -144,24 +212,24 @@ def handle_login():
 
         if "username" not in request_body or "password" not in request_body:
             return jsonify({"details": "Invalid data"}), 400
-        registered_login = Login(username=username,
-                            password=password)
-        # db.session.add(registered_login)
-        # db.session.commit()
 
-        result_login={"login":
-            Login.login_dict(registered_login)}
-        
-        return jsonify(result_login), 201
+        logged_in_user = User.query.filter_by(username=username,
+                                password=password).one_or_none()
+        if logged_in_user is None:
+            return jsonify({"details": "log in failed"}), 404
+
+        result_login={"user":
+            logged_in_user.user_dict()}
+        return jsonify(result_login), 200
 
 # Adresses route
 # Add additional address 
-@address_bp.route("/practitioners/<practitioner_id>/address", methods = ["POST", "GET"], strict_slashes = False)
-def handle_address(practitioner_id):
-    practitioner = Practitioner.query.get(practitioner_id)
+@address_bp.route("/providers/<provider_id>/address", methods = ["POST", "GET"], strict_slashes = False)
+def handle_address(provider_id):
+    provider = Provider.query.get(provider_id)
 
     if request.method == "GET":
-        address = practitioner.address
+        address = provider.address
         address_response = []
         address_response.append(Address.address_response_dict(address))
         return jsonify(address_response)
@@ -169,7 +237,7 @@ def handle_address(practitioner_id):
     elif request.method == "POST":
         request_body = request.get_json()
 
-        if "postal_code" not in request_body or "recipient" not in request_body or "street_name" not in request_body or "city" not in request_body or "state" not in request_body or "country" not in request_body or "practitioner_id" not in request_body:
+        if "postal_code" not in request_body or "recipient" not in request_body or "street_name" not in request_body or "city" not in request_body or "state" not in request_body or "country" not in request_body or "provider_id" not in request_body:
             return jsonify({"details": "Invalid data"}), 400
 
         

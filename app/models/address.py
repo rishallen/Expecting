@@ -7,12 +7,12 @@ class Address (db.Model):
     city = db.Column(db.String)
     state = db.Column(db.String)
     country = db.Column(db.String)
-    practitioner_id = db.Column(db.Integer, db.ForeignKey('practitioner.practitioner_id'), nullable=True)
+    provider_id = db.Column(db.Integer, db.ForeignKey('provider.provider_id'), nullable=True)
 
     def address_response_dict(address):
         return {
-            "postalCode": address.postal_code,
-            "street": address.street_name,
+            "postal_code": address.postal_code,
+            "street_name": address.street_name,
             "city": address.city,
             "state": address.state,
             "country": address.country
@@ -20,8 +20,8 @@ class Address (db.Model):
     
 
     def update_from_dict(self, data):
-        self.postal_code=data["postalCode"]
-        self.street_name=data["street"]
+        self.postal_code=data["postal_code"]
+        self.street_name=data["street_name"]
         self.city=data["city"]
         self.state=data["state"]
         self.country=data["country"]
