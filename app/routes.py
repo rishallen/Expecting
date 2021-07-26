@@ -44,14 +44,25 @@ def handle_providers():
         description =  request_body.get("description")
         address = request_body.get("address")
         post = request_body.get("post")
+        user_id = request_body.get("user_id")
 
-        if "first_name" not in request_body or "last_name" not in request_body or "title" not in request_body or "social_media_handle" not in request_body or "description" not in request_body or "address" not in request_body:
+        if ("first_name" not in request_body or 
+            "last_name"not in request_body or 
+            "title" not in request_body or 
+            "social_media_handle" not in request_body or 
+            "description" not in request_body or 
+            "address" not in request_body):
+            # "user_id" not in request_body
+            
+            
             return jsonify({"details": "Invalid data"}), 400
+
         new_provider = Provider(first_name=first_name,
                         last_name=last_name,
                         title=title,
                         social_media_handle=social_media_handle,
-                        description=description)
+                        description=description,
+                        user_id=user_id)
 
         db.session.add(new_provider)
         db.session.commit()
@@ -105,35 +116,41 @@ def handle_provider(provider_id):
 # Get Posts       
 @provider_bp.route("/providers/<provider_id>/users/<user_id>/posts", methods=["GET","POST"])
 def handle_posts(provider_id, user_id):
-    provider = Provider.query.get(provider_id)
+    provider = Provider.query.get_or_404(provider_id)
+    
 
     if request.method == "GET":
         posts = provider.posts
         posts_response = []
         for post in posts:
-            if post.user_id == user_id: 
+            if str(post.user_id) == user_id:
                 posts_response.append({
                 "post_id": post.post_id,
                 "message": post.message,
                 "provider_id": post.provider_id,
-                "user_id": post.user_id,
+                "user_id": post.user_id
         })
         return jsonify(posts_response)
+
     # Create post route:
     elif request.method == "POST":
         request_body = request.get_json()
+        user = User.query.get_or_404(user_id)
 
         if "message" not in request_body:
             return jsonify({"details": "Invalid data"}), 400
 
-        new_post = Post(message=request_body["message"], like_count=0, provider_id=provider.provider_id)
+        new_post = Post(message=request_body["message"], provider_id=provider.provider_id, user_id=user.user_id)
         db.session.add(new_post)
         db.session.commit()
+        
         commited_post = {"post": {
             "post_id": new_post.post_id,
             "message": new_post.message,
-            "votes": new_post.like_count,
-            "provider_id": new_post.provider_id
+            # "votes": new_post.like_count,
+            # put the provider is there is one
+            "provider_id": new_post.provider_id,
+            "user_id": new_post.user_id
         }}
         return jsonify(commited_post), 201
 
@@ -161,7 +178,6 @@ def handle_post_del(post_id):
     db.session.commit()
     posts_response_body = {"details": f'post {post.post_id} "{post.message}" successfully deleted'}
     return jsonify(posts_response_body),200
-
 
 # User route
 @user_bp.route("/users", methods=["GET", "POST"])
@@ -194,17 +210,16 @@ def handle_user():
         return jsonify(result_user), 201
 
 
-@login_bp.route('/login', methods=["GET", "POST"])
+@login_bp.route('/login', methods=["POST"])
 def handle_login():
-    if request.method == "GET":
-        logins = Login.query.all()
+    # if request.method == "GET":
+    #     logins = Login.query.all()
 
-        logins_response = []
-        for login in logins:
-            logins_response.append(Login.login_dict(login))
-        return jsonify(logins_response)
+    #     logins_response = []
+    #     for login in logins:
+    #         logins_response.append(Login.login_dict(login))
+    #     return jsonify(logins_response)
 
-    elif request.method == "POST":
         request_body = request.get_json()
         username = request_body.get("username")
         password = request_body.get("password")

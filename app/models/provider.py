@@ -9,8 +9,10 @@ class Provider (db.Model):
     title = db.Column(db.String)
     social_media_handle = db.Column(db.String)
     description = db.Column(db.String)
-    address = db.relationship('Address', backref='address', uselist=False, lazy=True)
-    posts = db.relationship('Post', backref='post', lazy=True, order_by="Post.post_id")
+    address = db.relationship('Address', backref='provider', uselist=False, lazy=True)
+    posts = db.relationship('Post', backref='provider', lazy=True, order_by="Post.post_id")
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
+
 
     def response_dict(provider):
         return {
@@ -20,7 +22,8 @@ class Provider (db.Model):
             "title": provider.title,
             "social_media_handle": provider.social_media_handle,
             "description": provider.description,
-            "address": Address.address_response_dict(provider.address)
+            "address": Address.address_response_dict(provider.address),
+            "user_id": provider.user_id
 
         }
     

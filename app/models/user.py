@@ -5,6 +5,7 @@ class User (db.Model):
     username = db.Column(db.String)
     password = db.Column(db.String)
     email = db.Column(db.String)
+    provider = db.relationship('Provider', backref='user', uselist=False, lazy=True)
 
     def user_dict(self):
         return {
@@ -12,5 +13,6 @@ class User (db.Model):
             "username": self.username,
             "password": self.password,
             "email": self.email,
+            "provider_id": self.provider.provider_id if self.provider else None
         }
     
