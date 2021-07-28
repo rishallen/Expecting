@@ -113,11 +113,10 @@ def handle_provider(provider_id):
         return jsonify(provider_response_body),200
 
 # Posts route:
-# Get Posts       
+# Get Post       
 @provider_bp.route("/providers/<provider_id>/users/<user_id>/posts", methods=["GET","POST"])
 def handle_posts(provider_id, user_id):
     provider = Provider.query.get_or_404(provider_id)
-    
 
     if request.method == "GET":
         posts = provider.posts
@@ -153,6 +152,17 @@ def handle_posts(provider_id, user_id):
             "user_id": new_post.user_id
         }}
         return jsonify(commited_post), 201
+
+# Get all posts
+@post_bp.route('/posts', methods=["GET"], strict_slashes = False)
+def handle_posts():
+    if request.method == "GET":
+        posts = Post.query.all()
+
+        posts_response = []
+        for post in posts:
+            posts_response.append(Post.post_response_dict(post))
+        return jsonify(posts_response)
 
 # Votes route:
 @post_bp.route("/<post_id>/votes", methods=["PATCH"])
